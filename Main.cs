@@ -30,7 +30,7 @@ namespace RipperStoreCreditsUploader
         private static HarmonyMethod GetPatch(string name) { return new HarmonyMethod(typeof(Main).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic)); }
         public override void OnApplicationStart()
         {
-            if (!File.Exists("RipperStoreCredits.json"))
+            if (!File.Exists("RipperStoreCredits.txt"))
             {
                 Console.WriteLine("\n------- !! -------\n\n\nGenerated new config, please insert your apiKey into 'RipperStoreCredits.txt'\n\n\n------- !! -------\n");
                 File.WriteAllText("RipperStoreCredits.json", JsonConvert.SerializeObject(new Config { apiKey = "place_apiKey_here", LogToConsole = true }, Formatting.Indented));
