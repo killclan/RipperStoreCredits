@@ -33,7 +33,7 @@ namespace RipperStoreCreditsUploader
             if (!File.Exists("RipperStoreCredits.txt"))
             {
                 Console.WriteLine("\n------- !! -------\n\n\nGenerated new config, please insert your apiKey into 'RipperStoreCredits.txt'\n\n\n------- !! -------\n");
-                File.WriteAllText("RipperStoreCredits.json", JsonConvert.SerializeObject(new Config { apiKey = "place_apiKey_here", LogToConsole = true }, Formatting.Indented));
+                File.WriteAllText("RipperStoreCredits.txt", JsonConvert.SerializeObject(new Config { apiKey = "place_apiKey_here", LogToConsole = true }, Formatting.Indented));
             }
             else { Config = JsonConvert.DeserializeObject<Config>(File.ReadAllText("RipperStoreCredits.txt")); }
             
