@@ -32,10 +32,10 @@ namespace RipperStoreCreditsUploader
         {
             if (!File.Exists("RipperStoreCredits.json"))
             {
-                Console.WriteLine("\n------- !! -------\n\n\nGenerated new config, please insert your apiKey into 'RipperStoreCredits.json'\n\n\n------- !! -------\n");
+                Console.WriteLine("\n------- !! -------\n\n\nGenerated new config, please insert your apiKey into 'RipperStoreCredits.txt'\n\n\n------- !! -------\n");
                 File.WriteAllText("RipperStoreCredits.json", JsonConvert.SerializeObject(new Config { apiKey = "place_apiKey_here", LogToConsole = true }, Formatting.Indented));
             }
-            else { Config = JsonConvert.DeserializeObject<Config>(File.ReadAllText("RipperStoreCredits.json")); }
+            else { Config = JsonConvert.DeserializeObject<Config>(File.ReadAllText("RipperStoreCredits.txt")); }
             
             //Big thx to keafy for this patch ^^
             var patch = HarmonyInstance.Create("patch"); patch.Patch(typeof(AssetBundleDownloadManager).GetMethods().FirstOrDefault(p => p.GetParameters().Length == 1 && p.GetParameters().First().ParameterType == typeof(ApiAvatar) && p.ReturnType == typeof(void)), GetPatch("CreditsWorker"));
