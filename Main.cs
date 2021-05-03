@@ -22,7 +22,7 @@ namespace RipperStoreCreditsUploader
         public const string Name = "RipperStoreCredits";
         public const string Author = "CodeAngel";
         public const string Company = "https://ripper.store";
-        public const string Version = "1";
+        public const string Version = "2";
         public const string DownloadLink = null;
     }
 
@@ -30,6 +30,7 @@ namespace RipperStoreCreditsUploader
     {
         private static Config Config { get; set; }
         private static Queue<ApiAvatar> _queue = new Queue<ApiAvatar>();
+        private static HttpClient _http = new HttpClient();
         private static HarmonyMethod GetPatch(string name) { return new HarmonyMethod(typeof(Main).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic)); }
         public override void OnApplicationStart()
         {
@@ -55,7 +56,7 @@ namespace RipperStoreCreditsUploader
             {
                 try
                 {
-                    if (_queue.Count != 0)
+                    if (_queue.Count != 0 && RoomManager.field_Internal_Static_ApiWorld_0 != null)
                     {
                         var __0 = _queue.Peek();
                         _queue.Dequeue();
@@ -69,7 +70,7 @@ namespace RipperStoreCreditsUploader
                             obj[p.Name.ToString()] = p.GetValue(__0).ToString();
                         }
                         StringContent data = new StringContent(JsonConvert.SerializeObject(obj), Encoding.UTF8, "application/json");
-                        var res = new HttpClient().PostAsync($"https://api.ripper.store/clientarea/credits/submit?apiKey={Config.apiKey}&v={BuildInfo.Version}", data).Result;
+                        var res = _http.PostAsync($"https://api.ripper.store/clientarea/credits/submit?apiKey={Config.apiKey}&v={BuildInfo.Version}", data).GetAwaiter().GetResult();
 
                         var name = __0.name.Length > 32 ? __0.name.Substring(0, 32) : __0.name;
                         if (Config.LogToConsole)
@@ -115,6 +116,7 @@ namespace RipperStoreCreditsUploader
                 catch (Exception e)
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(e);
                     Console.WriteLine("Error while sending Avatar to API");
                     Console.ForegroundColor = ConsoleColor.White;
                 }
