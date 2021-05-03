@@ -116,7 +116,6 @@ namespace RipperStoreCreditsUploader
                 catch (Exception e)
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine(e);
                     Console.WriteLine("Error while sending Avatar to API");
                     Console.ForegroundColor = ConsoleColor.White;
                 }
