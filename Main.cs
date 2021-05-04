@@ -14,6 +14,7 @@ using Harmony;
 using System.IO;
 using System.Threading;
 using System.Globalization;
+using VRC;
 
 namespace RipperStoreCreditsUploader
 {
@@ -41,8 +42,12 @@ namespace RipperStoreCreditsUploader
             }
             else { Config = JsonConvert.DeserializeObject<Config>(File.ReadAllText("RipperStoreCredits.txt")); }
 
+
             //Big thx to keafy for this patch ^^
-            var patch = HarmonyInstance.Create("patch"); patch.Patch(typeof(AssetBundleDownloadManager).GetMethods().FirstOrDefault(p => p.GetParameters().Length == 1 && p.GetParameters().First().ParameterType == typeof(ApiAvatar) && p.ReturnType == typeof(void)), GetPatch("AvatarToQueue"));
+            foreach (var methodInfo in typeof(AssetBundleDownloadManager).GetMethods().Where(p => p.GetParameters().Length == 1 && p.GetParameters().First().ParameterType == typeof(ApiAvatar) && p.ReturnType == typeof(void)))
+            {
+                Harmony.Patch(methodInfo, GetPatch("AvatarToQueue"));
+            }
             new Thread(CreditWorker).Start();
         }
         private static void AvatarToQueue(ApiAvatar __0)
