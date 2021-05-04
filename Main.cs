@@ -23,7 +23,7 @@ namespace RipperStoreCreditsUploader
         public const string Name = "RipperStoreCredits";
         public const string Author = "CodeAngel";
         public const string Company = "https://ripper.store";
-        public const string Version = "2";
+        public const string Version = "3";
         public const string DownloadLink = null;
     }
 
