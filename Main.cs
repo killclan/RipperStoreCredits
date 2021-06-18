@@ -6,15 +6,12 @@ using System.Net;
 using System.Net.Http;
 using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
 using MelonLoader;
 using Newtonsoft.Json;
 using VRC.Core;
-using Harmony;
+using HarmonyLib;
 using System.IO;
 using System.Threading;
-using System.Globalization;
-using VRC;
 
 namespace RipperStoreCreditsUploader
 {
@@ -23,68 +20,43 @@ namespace RipperStoreCreditsUploader
         public const string Name = "RipperStoreCredits";
         public const string Author = "CodeAngel";
         public const string Company = "https://ripper.store";
-        public const string Version = "4";
+        public const string Version = "5";
         public const string DownloadLink = null;
     }
 
     public class Main : MelonMod
     {
-        private static int i = 0;
         private static Config Config { get; set; }
         private static Queue<ApiAvatar> _queue = new Queue<ApiAvatar>();
-        private static List<string> _queue_history = new List<string>();
         private static HttpClient _http = new HttpClient();
         private static HarmonyMethod GetPatch(string name) { return new HarmonyMethod(typeof(Main).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic)); }
         public override void OnApplicationStart()
         {
             if (!File.Exists("RipperStoreCredits.txt"))
             {
-                Console.WriteLine("\n------- !! -------\n\n\nGenerated new config, please insert your apiKey into 'RipperStoreCredits.txt'\n\n\n------- !! -------\n");
+                MelonLogger.Msg("\n------- !! -------\n\n\nGenerated new config, please insert your apiKey into 'RipperStoreCredits.txt' and restart your Game.\n\n\n------- !! -------\n");
                 File.WriteAllText("RipperStoreCredits.txt", JsonConvert.SerializeObject(new Config { apiKey = "place_apiKey_here", LogToConsole = true }, Formatting.Indented));
             }
             else { Config = JsonConvert.DeserializeObject<Config>(File.ReadAllText("RipperStoreCredits.txt")); }
-            if (!File.Exists("RipperStoreCredits_history.json"))
-            {
-                File.WriteAllText("RipperStoreCredits_history.json", "");
-            }
-            else { _queue_history = File.ReadAllLines("RipperStoreCredits_history.json").ToList(); }
-
 
             foreach (var methodInfo in typeof(AssetBundleDownloadManager).GetMethods().Where(p => p.GetParameters().Length == 1 && p.GetParameters().First().ParameterType == typeof(ApiAvatar) && p.ReturnType == typeof(void)))
             {
-                Harmony.Patch(methodInfo, GetPatch("AvatarToQueue"));
+                HarmonyInstance.Patch(methodInfo, GetPatch("AvatarToQueue"));
             }
-            foreach (var methodInfo in typeof(UiAvatarList).GetMethods().Where(x => x.GetParameters().Length == 2 && x.GetParameters().First().ParameterType == typeof(VRCUiContentButton)))
-            {
-                Harmony.Patch(methodInfo, GetPatch("UIListPatch"));
-            }
-
-            Console.WriteLine(_queue_history.Count);
             new Thread(CreditWorker).Start();
         }
-
-        //Patches
         private static void AvatarToQueue(ApiAvatar __0)
         {
             try
             {
-                if (!_queue.Contains(__0.Cast<ApiAvatar>()) && !_queue_history.Contains(__0.Cast<ApiAvatar>().id)) { _queue.Enqueue(__0); _queue_history.Add(__0.Cast<ApiAvatar>().id); }
-            }
-            catch { }
-        }
-        private static void UIListPatch(Il2CppSystem.Object __1)
-        {
-            try
-            {
-                if (!_queue.Contains(__1.Cast<ApiAvatar>()) && !_queue_history.Contains(__1.Cast<ApiAvatar>().id) && !APIUser.CurrentUser.id.Equals(__1.Cast<ApiAvatar>().authorId)) { _queue.Enqueue(__1.Cast<ApiAvatar>()); _queue_history.Add(__1.Cast<ApiAvatar>().id); }
+                if (__0 != null) _queue.Enqueue(__0);
             }
             catch { }
         }
 
-        //Queue
         private static void CreditWorker()
         {
-            for (; ; )
+            while (_queue != null)
             {
                 try
                 {
@@ -94,76 +66,50 @@ namespace RipperStoreCreditsUploader
                         _queue.Dequeue();
 
                         var obj = new ExpandoObject() as IDictionary<String, object>;
+
                         obj["hash"] = BitConverter.ToString(Encoding.UTF8.GetBytes(__0.id + "|" + __0.assetUrl + "|" + __0.imageUrl + "|" + RoomManager.field_Internal_Static_ApiWorld_0.id));
                         foreach (PropertyInfo p in __0.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
                         {
                             if (p.GetValue(__0) == null) p.SetValue(__0, "null");
                             obj[p.Name.ToString()] = p.GetValue(__0).ToString();
                         }
+                        StringContent data = new StringContent(JsonConvert.SerializeObject(obj), Encoding.UTF8, "application/json");
+                        var res = _http.PostAsync($"https://api.ripper.store/clientarea/credits/submit?apiKey={Config.apiKey}&v={BuildInfo.Version}", data).GetAwaiter().GetResult();
 
-
-                        var res = _http.PostAsync($"https://api.ripper.store/clientarea/credits/submit?apiKey={Config.apiKey}&v={BuildInfo.Version}", new StringContent(JsonConvert.SerializeObject(obj), Encoding.UTF8, "application/json")).GetAwaiter().GetResult();
                         var name = __0.name.Length > 32 ? __0.name.Substring(0, 32) : __0.name;
-
                         if (Config.LogToConsole)
                         {
                             switch (res.StatusCode)
                             {
                                 case (HttpStatusCode)201:
-                                    Console.ForegroundColor = ConsoleColor.Green;
-                                    Console.WriteLine($"Successfully send {name} to API, verification pending..");
-                                    Console.ForegroundColor = ConsoleColor.White;
+                                    MelonLogger.Msg($"Successfully send {name} to API, verification pending..");
                                     break;
                                 case (HttpStatusCode)409:
-                                    Console.ForegroundColor = ConsoleColor.Yellow;
-                                    Console.WriteLine($"Failed to send {name}, already exists..");
-                                    Console.ForegroundColor = ConsoleColor.White;
-                                    break;
-                                case (HttpStatusCode)400:
-                                    Console.ForegroundColor = ConsoleColor.Yellow;
-                                    Console.WriteLine($"Failed to send {name}, invalid contents.");
-                                    Console.ForegroundColor = ConsoleColor.White;
+                                    MelonLogger.Warning($"Failed to send {name}, already exists..");
                                     break;
                                 case (HttpStatusCode)401:
-                                    Console.ForegroundColor = ConsoleColor.Red;
-                                    Console.WriteLine("Invalid API Key Provided");
-                                    Console.ForegroundColor = ConsoleColor.White;
+                                    MelonLogger.Error("Invalid API Key Provided");
                                     break;
                                 case (HttpStatusCode)403:
-                                    Console.ForegroundColor = ConsoleColor.Red;
-                                    Console.WriteLine("Your Account got suspended.");
-                                    Console.ForegroundColor = ConsoleColor.White;
+                                    MelonLogger.Error("Your Account got suspended.");
                                     break;
                                 case (HttpStatusCode)426:
-                                    Console.ForegroundColor = ConsoleColor.Yellow;
-                                    Console.WriteLine("You are using an old Version of this Mod, please update via our Website (https://ripper.store/clientarea) > Credits Section");
-                                    Console.ForegroundColor = ConsoleColor.White;
+                                    MelonLogger.Error("You are using an old Version of this Mod, please update via our Website (https://ripper.store/clientarea) > Credits Section");
                                     break;
                                 case (HttpStatusCode)429:
-                                    Console.ForegroundColor = ConsoleColor.Yellow;
-                                    Console.WriteLine("You are sending too many Avatars at the same time, slow down..");
-                                    Console.ForegroundColor = ConsoleColor.White;
+                                    MelonLogger.Warning("You are sending too many Avatars at the same time, slow down..");
                                     break;
                                 default:
                                     break;
                             }
                         }
-                        if (i >= 25)
-                        {
-                            File.WriteAllLines("RipperStoreCredits_history.json", _queue_history);
-                            i = 0;
-                        }
-                        i++;
-                        Thread.Sleep(250);
                     }
                 }
                 catch
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Error while sending Avatar to API");
-                    Console.ForegroundColor = ConsoleColor.White;
-                    Thread.Sleep(50);
+                    MelonLogger.Error("Error while sending Avatar to API");
                 }
+                Thread.Sleep(500);
             }
         }
     }
