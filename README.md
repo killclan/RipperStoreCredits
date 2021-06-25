@@ -1,4 +1,4 @@
-# RipperStoreCredits ![](https://img.shields.io/github/downloads/CodeAngel3/RipperStoreCredits/total)
+# RipperStoreCredits
  
 Should only be used for earning Credits on RipperStore
 
