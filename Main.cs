@@ -12,6 +12,7 @@ using VRC.Core;
 using HarmonyLib;
 using System.IO;
 using System.Threading;
+using System.ComponentModel;
 
 namespace RipperStoreCreditsUploader
 {
@@ -20,7 +21,7 @@ namespace RipperStoreCreditsUploader
         public const string Name = "RipperStoreCredits";
         public const string Author = "CodeAngel";
         public const string Company = "https://ripper.store";
-        public const string Version = "5";
+        public const string Version = "6";
         public const string DownloadLink = null;
     }
 
@@ -66,16 +67,16 @@ namespace RipperStoreCreditsUploader
                         _queue.Dequeue();
 
                         var obj = new ExpandoObject() as IDictionary<String, object>;
-
-                        obj["hash"] = BitConverter.ToString(Encoding.UTF8.GetBytes(__0.id + "|" + __0.assetUrl + "|" + __0.imageUrl + "|" + RoomManager.field_Internal_Static_ApiWorld_0.id));
-                        foreach (PropertyInfo p in __0.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
+                        foreach (PropertyDescriptor _ in TypeDescriptor.GetProperties(__0))
                         {
-                            if (p.GetValue(__0) == null) p.SetValue(__0, "null");
-                            obj[p.Name.ToString()] = p.GetValue(__0).ToString();
+                            if (_.GetValue(__0) == null) _.SetValue(__0, "null");
+                            obj[_.Name] = _.GetValue(__0);
                         }
-                        StringContent data = new StringContent(JsonConvert.SerializeObject(obj), Encoding.UTF8, "application/json");
-                        var res = _http.PostAsync($"https://api.ripper.store/clientarea/credits/submit?apiKey={Config.apiKey}&v={BuildInfo.Version}", data).GetAwaiter().GetResult();
 
+                        obj["hash"] = BitConverter.ToString(Encoding.UTF8.GetBytes($"{__0.id}|{__0.assetUrl}|{__0.imageUrl}|{APIUser.CurrentUser.id}"));
+                        StringContent data = new StringContent(JsonConvert.SerializeObject(obj, Formatting.None, new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Ignore }), Encoding.UTF8, "application/json");
+
+                        var res = _http.PostAsync($"https://api.ripper.store/clientarea/credits/submit?apiKey={Config.apiKey}&v={BuildInfo.Version}&t={DateTimeOffset.Now.ToUnixTimeSeconds()}", data).GetAwaiter().GetResult();
                         var name = __0.name.Length > 32 ? __0.name.Substring(0, 32) : __0.name;
                         if (Config.LogToConsole)
                         {
@@ -105,9 +106,9 @@ namespace RipperStoreCreditsUploader
                         }
                     }
                 }
-                catch
+                catch (Exception e)
                 {
-                    MelonLogger.Error("Error while sending Avatar to API");
+                    MelonLogger.Error("Error while sending Avatar to API: " + e);
                 }
                 Thread.Sleep(500);
             }
