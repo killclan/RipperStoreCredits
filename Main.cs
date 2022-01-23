@@ -11,8 +11,9 @@ using Newtonsoft.Json;
 using VRC.Core;
 using HarmonyLib;
 using System.IO;
-using System.Threading;
 using System.ComponentModel;
+using System.Collections;
+using UnityEngine;
 
 namespace RipperStoreCreditsUploader
 {
@@ -21,7 +22,7 @@ namespace RipperStoreCreditsUploader
         public const string Name = "RipperStoreCredits";
         public const string Author = "CodeAngel";
         public const string Company = "https://ripper.store";
-        public const string Version = "6";
+        public const string Version = "7";
         public const string DownloadLink = null;
     }
 
@@ -44,8 +45,10 @@ namespace RipperStoreCreditsUploader
             {
                 HarmonyInstance.Patch(methodInfo, GetPatch("AvatarToQueue"));
             }
-            new Thread(CreditWorker).Start();
+
+            MelonCoroutines.Start(CreditWorker());
         }
+
         private static void AvatarToQueue(ApiAvatar __0)
         {
             try
@@ -55,7 +58,7 @@ namespace RipperStoreCreditsUploader
             catch { }
         }
 
-        private static void CreditWorker()
+        private static IEnumerator CreditWorker()
         {
             while (_queue != null)
             {
@@ -78,6 +81,7 @@ namespace RipperStoreCreditsUploader
 
                         var res = _http.PostAsync($"https://api.ripper.store/clientarea/credits/submit?apiKey={Config.apiKey}&v={BuildInfo.Version}&t={DateTimeOffset.Now.ToUnixTimeSeconds()}", data).GetAwaiter().GetResult();
                         var name = __0.name.Length > 32 ? __0.name.Substring(0, 32) : __0.name;
+
                         if (Config.LogToConsole)
                         {
                             switch (res.StatusCode)
@@ -110,7 +114,8 @@ namespace RipperStoreCreditsUploader
                 {
                     MelonLogger.Error("Error while sending Avatar to API: " + e);
                 }
-                Thread.Sleep(500);
+
+                yield return new WaitForSeconds(0.5f);
             }
         }
     }
