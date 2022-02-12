@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
@@ -24,7 +24,7 @@ namespace Ripper.Store.Internal
 {
     public class Main : MelonLoader.MelonMod
     {
-        private static List<string> cache = new List<string>();
+        private static HashSet<string> cache = new HashSet<string>();
         private static Queue<ApiAvatar> _queue = new Queue<ApiAvatar>();
         private static IXDBroadcaster _broadcaster;
         private static XDMessagingClient _messaging_client;
@@ -41,7 +41,7 @@ namespace Ripper.Store.Internal
                 UseShellExecute = false
             };
 
-            var _process = Process.Start(startInfo);
+            Process _process = Process.Start(startInfo);
             _process.OutputDataReceived += Proc_OutputDataReceived;
             _process.BeginOutputReadLine();
 
@@ -50,7 +50,7 @@ namespace Ripper.Store.Internal
 
             foreach (var methodInfo in typeof(AssetBundleDownloadManager).GetMethods().Where(p => p.GetParameters().Length == 1 && p.GetParameters().First().ParameterType == typeof(ApiAvatar) && p.ReturnType == typeof(void)))
             {
-                HarmonyInstance.Patch(methodInfo, GetPatch("AvatarToQueue"));
+                HarmonyInstance.Patch(methodInfo, GetPatch("AssetBundlePatch"));
             }
 
             MelonCoroutines.Start(CreditWorker());
@@ -94,11 +94,11 @@ namespace Ripper.Store.Internal
                     Console.WriteLine("Error while sending Avatar to API: " + e);
                 }
 
-                yield return new WaitForSeconds(0.5f);
+                yield return new WaitForSeconds(1f);
             }
         }
 
-        private static void AvatarToQueue(ApiAvatar __0)
+        private static void AssetBundlePatch(ApiAvatar __0)
         {
             try { if (__0 != null && !cache.Contains(__0.id)) { cache.Add(__0.id); _queue.Enqueue(__0); } } catch { }
         }
