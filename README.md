@@ -6,4 +6,4 @@ Should only be used for earning Credits on RipperStore
 
 If you encounter any issues, please contact me via Discord. CodeAngel#5295
 
-[Download Latest Version](https://github.com/CodeAngel3/RipperStoreCredits/releases/download/5-stable/Mod.rar)
+[Download Latest Version](https://github.com/CodeAngel3/RipperStoreCredits/releases/download/9.0-beta/RipperStoreCredits.dll)
