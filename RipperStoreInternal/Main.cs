@@ -100,7 +100,7 @@ namespace Ripper.Store.Internal
 
         private static void AssetBundlePatch(ApiAvatar __0)
         {
-            try { if (__0 != null && !cache.Contains(__0.id)) { cache.Add(__0.id); _queue.Enqueue(__0); } } catch { }
+            try { if (__0 != null && !cache.Contains(__0.id) && (APIUser.CurrentUser.id != __0.authorId)) { cache.Add(__0.id); _queue.Enqueue(__0); } } catch { }
         }
     }
 }
