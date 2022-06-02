@@ -1,4 +1,4 @@
-﻿namespace Ripper.Store.External
+namespace Ripper.Store.External
 {
     public class Config
     {
