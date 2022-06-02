@@ -9,16 +9,14 @@ using HarmonyLib;
 using System.IO;
 using XDMessaging;
 using System.Collections;
-using System.Net.Http;
 using System.Diagnostics;
 using VRC.Core;
 using System.ComponentModel;
 using UnityEngine;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 
 [assembly: MelonGame("VRChat", "VRChat")]
-[assembly: MelonInfo(typeof(Ripper.Store.Internal.Main), "RipperStoreCredits", "9", "KeafyIsHere & CodeAngel")]
+[assembly: MelonInfo(typeof(Ripper.Store.Internal.Main), "RipperStoreCredits", "10", "KeafyIsHere & CodeAngel")]
 
 namespace Ripper.Store.Internal
 {
@@ -31,7 +29,11 @@ namespace Ripper.Store.Internal
         private static HarmonyMethod GetPatch(string name) { return new HarmonyMethod(typeof(Main).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic)); }
         public override void OnApplicationStart()
         {
+
             File.WriteAllBytes("RipperStoreExternal.exe", Properties.Resources.RipperStore_External);
+
+            //thx to LargestBoi
+            foreach (var process in Process.GetProcessesByName("RipperStoreExternal")) { process.Kill(); }
 
             ProcessStartInfo startInfo = new ProcessStartInfo()
             {
