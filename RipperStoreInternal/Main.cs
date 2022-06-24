@@ -29,11 +29,10 @@ namespace Ripper.Store.Internal
         private static HarmonyMethod GetPatch(string name) { return new HarmonyMethod(typeof(Main).GetMethod(name, BindingFlags.Static | BindingFlags.NonPublic)); }
         public override void OnApplicationStart()
         {
-
-            File.WriteAllBytes("RipperStoreExternal.exe", Properties.Resources.RipperStore_External);
-
-            //thx to LargestBoi
+        
             foreach (var process in Process.GetProcessesByName("RipperStoreExternal")) { process.Kill(); }
+            
+            File.WriteAllBytes("RipperStoreExternal.exe", Properties.Resources.RipperStore_External);
 
             ProcessStartInfo startInfo = new ProcessStartInfo()
             {
