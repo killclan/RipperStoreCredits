@@ -1,3 +1,8 @@
+- ![#f03c15](https://via.placeholder.com/15/f03c15/f03c15.png) `Due to VRChat implementing EasyAntiCheat, this Mod stopped working, join our Discord for updates.`
+
+Discord: [https://discord.ripper.store](https://discord.ripper.store)
+
+
 # RipperStoreCredits
  
 Should only be used for earning Credits on RipperStore
